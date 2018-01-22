@@ -1,0 +1,57 @@
+#!/usr/bin/env node
+
+const parser = require('git-diff-parser')
+const { getDiff, getCommits } = require('../lib/git-helper')
+
+const {
+    _: authors,
+    level = 1
+} = require('yargs')
+    .option('level')
+    .alias('level', 'l')
+    .number('level')
+    .argv
+
+;(async () => {
+    const addDel = {}
+
+    for (let author of authors) {
+        for (let commitHash of await getCommits(author)) {
+            const rawDiff = await getDiff(commitHash)
+            const diff = parser(rawDiff)
+            for (let commit of diff.commits) {
+                for (let file of commit.files) {
+                    for (let line of file.lines) {
+                        const { type } = line
+                        if (!addDel[file.name])
+                            addDel[file.name] = { added: 0, deleted: 0, normal: 0 }
+                        addDel[file.name][line.type] += 1
+                    }
+                }
+            }
+        }
+    }
+
+    // group addDel by directory level
+    const nthOccurance = (str, subStr, nth) => {
+        return str.split(subStr, nth).join(subStr).length
+    }
+
+    const groupedAddDel = {}
+    for (let file in addDel) {
+        const key = file.slice(0, nthOccurance(file, '/', level))
+        if (!groupedAddDel[key])
+            groupedAddDel[key] = { added: 0, deleted: 0, normal: 0 }
+        const { added, deleted, normal } = addDel[file]
+        groupedAddDel[key].added += added
+        groupedAddDel[key].deleted += deleted
+        groupedAddDel[key].normal += normal
+    }
+
+    const keys = Object.keys(groupedAddDel).sort()
+    const maxLen = keys.reduce((ret, cur) => Math.max(ret, cur.length), 0)
+    for (let key of keys) {
+        const { added, deleted } = groupedAddDel[key]
+        console.log(`${key.padEnd(maxLen)}\t+${added}\t-${deleted}`)
+    }
+})()

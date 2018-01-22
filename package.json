@@ -1,0 +1,15 @@
+{
+  "name": "whats-my-contrib",
+  "version": "0.1.0",
+  "description": "see your contribution in git repo by directory",
+  "main": "bin/whats-my-contrib",
+  "repository": "https://github.com/wacky6/whats-my-contrib",
+  "author": "wacky6.AriesMBP <416707889@qq.com>",
+  "license": "MIT",
+  "dependencies": {
+    "diff-parse": "^0.0.13",
+    "git-diff-parser": "^0.1.1",
+    "parse-diff": "^0.4.0",
+    "yargs": "^10.1.1"
+  }
+}
